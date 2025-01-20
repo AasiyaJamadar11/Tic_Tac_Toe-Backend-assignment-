@@ -11,9 +11,9 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+AUTH_USER_MODEL = 'game.User'
 
 
 # Quick-start development settings - unsuitable for production
@@ -55,11 +55,15 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'tic_tac_toe.urls'
 
+import os
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
+        'DIRS': [
+            os.path.join(BASE_DIR, 'templates'),  # This should correctly point to your 'templates' folder
+        ],
+        'APP_DIRS': True,  # Ensures Django looks for templates in app-specific 'templates' directories
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
@@ -78,7 +82,6 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
 }
-AUTH_USER_MODEL = 'game.User'
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
