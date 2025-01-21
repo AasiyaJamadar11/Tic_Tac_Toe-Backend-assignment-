@@ -97,10 +97,12 @@ class StartGameView(APIView):
         return Response(GameSerializer(game).data, status=status.HTTP_201_CREATED)
 
 from rest_framework.permissions import IsAuthenticated
+from django.db import transaction
 
 class MakeMoveView(APIView):
     permission_classes = [IsAuthenticated]  # Ensure that the user is authenticated
 
+    @transaction.atomic  # Ensure the move and turn switch happen atomically
     def post(self, request):
         game_id = request.data.get('game_id')
         position = request.data.get('position')
@@ -114,7 +116,8 @@ class MakeMoveView(APIView):
         # Debug log to check request user and players
         print(f"Authenticated User: {request.user.username}")
         print(f"Game ID: {game.id}, Player1: {game.player1.username}, Player2: {game.player2.username}")
-        
+        print(f"Current Turn before move: {game.current_turn.username}")
+
         # Check if the user is part of the game
         if request.user not in [game.player1, game.player2]:
             return Response({'error': 'You are not part of this game'}, status=status.HTTP_400_BAD_REQUEST)
@@ -135,21 +138,21 @@ class MakeMoveView(APIView):
             
             # Process the move
             game.make_move(position, request.user)  # This calls the method that updates the board and game state
-            game.current_turn = game.player2 if game.current_turn == game.player1 else game.player1  # Switch turn
-            game.save()
+
+            # Log turn change
+            print(f"Turn switched. New turn: {game.current_turn.username}")
+
+            # Check if there is a winner or draw after the move
+            if game.winner:
+                return Response({'message': f'{game.winner.username} wins!'}, status=status.HTTP_200_OK)
+            elif game.draw:
+                return Response({'message': 'The game is a draw!'}, status=status.HTTP_200_OK)
+
+            # Game is still ongoing, return updated game state
+            return Response(GameSerializer(game).data, status=status.HTTP_200_OK)
+
         except ValueError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Check if there is a winner or draw after the move
-        if game.winner:
-            return Response({'message': f'{game.winner.username} wins!'}, status=status.HTTP_200_OK)
-        elif game.draw:
-            return Response({'message': 'The game is a draw!'}, status=status.HTTP_200_OK)
-
-        # Game is still ongoing, return updated game state
-        return Response(GameSerializer(game).data, status=status.HTTP_200_OK)
-
-
 
 
 class GameHistoryView(APIView):
