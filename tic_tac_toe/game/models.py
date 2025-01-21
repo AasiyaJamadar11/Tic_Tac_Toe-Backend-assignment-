@@ -43,6 +43,10 @@ class Game(models.Model):
 
     def make_move(self, position, player):
         """Make a move for the player at the given position (0-8)"""
+
+        if self.winner or self.draw:
+            raise ValueError('Game has already ended. Cannot make a move.')
+
         if self.game_board[position] != ' ':
             raise ValueError('Invalid move: The position is already taken.')
         

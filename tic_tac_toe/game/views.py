@@ -93,24 +93,53 @@ class StartGameView(APIView):
         # Return the game details using the GameSerializer
         return Response(GameSerializer(game).data, status=status.HTTP_201_CREATED)
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Game
+from .serializers import GameSerializer
+from django.shortcuts import get_object_or_404
+
 class MakeMoveView(APIView):
     def post(self, request):
-        game = get_object_or_404(Game, id=request.data['game_id'])
+        # Ensure that both game_id and position are provided in the request
+        game_id = request.data.get('game_id')
+        position = request.data.get('position')
+
+        if game_id is None or position is None:
+            return Response({'error': 'Both game_id and position are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Get the game object using the provided game ID
+        game = get_object_or_404(Game, id=game_id)
+
+        # Check if the game is still ongoing (no winner and no draw)
+        if game.winner or game.draw:
+            return Response({'error': 'Cannot update a completed game'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Check if it is the user's turn to play
         if game.current_turn != request.user:
             return Response({'error': 'It is not your turn'}, status=status.HTTP_400_BAD_REQUEST)
         
         try:
-            position = int(request.data['position'])
-            game.make_move(position, request.user)
+            # Validate that the position is an integer and within the valid range (0-8)
+            position = int(position)
+            if position < 0 or position > 8:
+                return Response({'error': 'Invalid position. Position must be between 0 and 8.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Process the move
+            game.make_move(position, request.user)  
         except ValueError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        
+
+        # Check if there is a winner or draw after the move
         if game.winner:
             return Response({'message': f'{game.winner.username} wins!'}, status=status.HTTP_200_OK)
         elif game.draw:
             return Response({'message': 'The game is a draw!'}, status=status.HTTP_200_OK)
 
+        # Game is still ongoing, return updated game state
         return Response(GameSerializer(game).data, status=status.HTTP_200_OK)
+
 
 class GameHistoryView(APIView):
     permission_classes = [IsAuthenticated]  # This ensures the user is authenticated
@@ -148,8 +177,28 @@ class GameHistoryView(APIView):
         return Response(game_histories, status=status.HTTP_200_OK)
 
 class UpdateProfileView(APIView):
+    permission_classes = [IsAuthenticated]  # Ensure only authenticated users can update their profile
+
     def put(self, request):
+        # Check if the user is authenticated
+        if request.user.is_anonymous:
+            return Response({"error": "Authentication required."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # Fetch the user from the request
         user = request.user
-        user.username = request.data.get('username', user.username)
+
+        # Update user profile with data from request
+        username = request.data.get('username', user.username)
+        email = request.data.get('email', user.email)
+
+        # Optionally, update password (make sure it's hashed if updating)
+        password = request.data.get('password', None)
+        if password:
+            user.set_password(password)
+
+        # Save the user instance
+        user.username = username
+        user.email = email
         user.save()
-        return Response({'message': 'Profile updated successfully!'})
+
+        return Response({'message': 'Profile updated successfully!'}, status=status.HTTP_200_OK)
