@@ -3,9 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Tic Tac Toe</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
-    This is home page
+    <div style="width: 300px; margin: auto; text-align: center; font-family: Arial, sans-serif;">
+        <h1>Tic Tac Toe</h1>
+
+        <!-- Game Board -->
+        <div id="game-board" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px;">
+            <!-- 3x3 grid cells -->
+            <div class="cell" data-position="0" style="width: 100px; height: 100px; display: flex; justify-content: center; align-items: center; font-size: 24px; font-weight: bold; border: 1px solid #000; cursor: pointer;"></div>
+            <div class="cell" data-position="1" style="width: 100px; height: 100px; display: flex; justify-content: center; align-items: center; font-size: 24px; font-weight: bold; border: 1px solid #000; cursor: pointer;"></div>
+            <div class="cell" data-position="2" style="width: 100px; height: 100px; display: flex; justify-content: center; align-items: center; font-size: 24px; font-weight: bold; border: 1px solid #000; cursor: pointer;"></div>
+            <div class="cell" data-position="3" style="width: 100px; height: 100px; display: flex; justify-content: center; align-items: center; font-size: 24px; font-weight: bold; border: 1px solid #000; cursor: pointer;"></div>
+            <div class="cell" data-position="4" style="width: 100px; height: 100px; display: flex; justify-content: center; align-items: center; font-size: 24px; font-weight: bold; border: 1px solid #000; cursor: pointer;"></div>
+            <div class="cell" data-position="5" style="width: 100px; height: 100px; display: flex; justify-content: center; align-items: center; font-size: 24px; font-weight: bold; border: 1px solid #000; cursor: pointer;"></div>
+            <div class="cell" data-position="6" style="width: 100px; height: 100px; display: flex; justify-content: center; align-items: center; font-size: 24px; font-weight: bold; border: 1px solid #000; cursor: pointer;"></div>
+            <div class="cell" data-position="7" style="width: 100px; height: 100px; display: flex; justify-content: center; align-items: center; font-size: 24px; font-weight: bold; border: 1px solid #000; cursor: pointer;"></div>
+            <div class="cell" data-position="8" style="width: 100px; height: 100px; display: flex; justify-content: center; align-items: center; font-size: 24px; font-weight: bold; border: 1px solid #000; cursor: pointer;"></div>
+        </div>
+
+        <!-- Game Info -->
+        <div id="game-info" style="margin-top: 20px;">
+            <p id="current-turn">Current Turn: <span id="current-player"></span></p>
+            <p id="winner-message" style="display: none; margin-top: 10px; font-size: 18px; font-weight: bold; color: green;"></p>
+            <button id="restart-game" style="display: none; margin-top: 10px; padding: 10px 20px; font-size: 16px; cursor: pointer;">Restart Game</button>
+        </div>
+
+        <!-- Authenticated Players -->
+        <div id="player-info" style="margin-top: 20px;">
+            <p>Player 1: <span id="player1"></span></p>
+            <p>Player 2: <span id="player2"></span></p>
+        </div>
+
+        <script>
+            const currentUser = "{{ request.user.username }}";
+            let gameId = null;
+
+            function loadGame() {
+                $.ajax({
+                    url: "/api/start_game/",
+                    type: "POST",
+                    data: JSON.stringify({ player1: 1, player2: 2 }),
+                    contentType: "application/json",
+                    success: function (response) {
+                        gameId = response.id;
+                        $("#player1").text(response.player1);
+                        $("#player2").text(response.player2);
+                        $("#current-player").text(response.current_turn);
+                        updateBoard(response.game_board);
+                    },
+                    error: function (error) {
+                        alert("Error starting the game: " + error.responseJSON.error);
+                    }
+                });
+            }
+
+            function updateBoard(board) {
+                const cells = $("#game-board .cell");
+                cells.each(function (index) {
+                    $(this).text(board[index]);
+                });
+            }
+
+            $("#game-board").on("click", ".cell", function () {
+                const position = $(this).data("position");
+                $.ajax({
+                    url: "/api/make_move/",
+                    type: "POST",
+                    data: JSON.stringify({ game_id: gameId, position }),
+                    contentType: "application/json",
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+                    },
+                    success: function (response) {
+                        updateBoard(response.game_board);
+                        $("#current-player").text(response.current_turn);
+
+                        if (response.winner) {
+                            $("#winner-message").text(`${response.winner} wins!`).show();
+                            $("#restart-game").show();
+                        } else if (response.draw) {
+                            $("#winner-message").text("It's a draw!").show();
+                            $("#restart-game").show();
+                        }
+                    },
+                    error: function (error) {
+                        alert("Error making move: " + error.responseJSON.error);
+                    }
+                });
+            });
+
+            $("#restart-game").click(function () {
+                loadGame();
+                $("#winner-message").hide();
+                $(this).hide();
+            });
+
+            $(document).ready(function () {
+                loadGame();
+            });
+        </script>
+    </div>
 </body>
 </html>

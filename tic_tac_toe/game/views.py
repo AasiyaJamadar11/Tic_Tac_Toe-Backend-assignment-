@@ -36,6 +36,9 @@ def login_page(request):
 def register_page(request):
     return render(request, 'register.html')
 
+def index(request):
+    return render(request, 'index.html')
+
 class RegisterView(APIView):
     def post(self, request):
         serializer = UserSerializer(data=request.data)
@@ -93,16 +96,12 @@ class StartGameView(APIView):
         # Return the game details using the GameSerializer
         return Response(GameSerializer(game).data, status=status.HTTP_201_CREATED)
 
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from .models import Game
-from .serializers import GameSerializer
-from django.shortcuts import get_object_or_404
+from rest_framework.permissions import IsAuthenticated
 
 class MakeMoveView(APIView):
+    permission_classes = [IsAuthenticated]  # Ensure that the user is authenticated
+
     def post(self, request):
-        # Ensure that both game_id and position are provided in the request
         game_id = request.data.get('game_id')
         position = request.data.get('position')
 
@@ -112,14 +111,22 @@ class MakeMoveView(APIView):
         # Get the game object using the provided game ID
         game = get_object_or_404(Game, id=game_id)
 
+        # Debug log to check request user and players
+        print(f"Authenticated User: {request.user.username}")
+        print(f"Game ID: {game.id}, Player1: {game.player1.username}, Player2: {game.player2.username}")
+        
+        # Check if the user is part of the game
+        if request.user not in [game.player1, game.player2]:
+            return Response({'error': 'You are not part of this game'}, status=status.HTTP_400_BAD_REQUEST)
+
         # Check if the game is still ongoing (no winner and no draw)
         if game.winner or game.draw:
             return Response({'error': 'Cannot update a completed game'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         # Check if it is the user's turn to play
         if game.current_turn != request.user:
             return Response({'error': 'It is not your turn'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         try:
             # Validate that the position is an integer and within the valid range (0-8)
             position = int(position)
@@ -127,7 +134,9 @@ class MakeMoveView(APIView):
                 return Response({'error': 'Invalid position. Position must be between 0 and 8.'}, status=status.HTTP_400_BAD_REQUEST)
             
             # Process the move
-            game.make_move(position, request.user)  
+            game.make_move(position, request.user)  # This calls the method that updates the board and game state
+            game.current_turn = game.player2 if game.current_turn == game.player1 else game.player1  # Switch turn
+            game.save()
         except ValueError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -139,6 +148,8 @@ class MakeMoveView(APIView):
 
         # Game is still ongoing, return updated game state
         return Response(GameSerializer(game).data, status=status.HTTP_200_OK)
+
+
 
 
 class GameHistoryView(APIView):

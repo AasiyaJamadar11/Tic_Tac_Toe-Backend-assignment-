@@ -1,11 +1,8 @@
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.contrib.auth import get_user_model
 
-# game/models.py
-# Get the custom user model
-from django.contrib.auth.models import AbstractUser
-from django.db import models
-
+# Define your custom User model (if needed)
 class User(AbstractUser):
     pass
 
@@ -80,7 +77,38 @@ class GameHistory(models.Model):
     game = models.ForeignKey(Game, related_name='history', on_delete=models.CASCADE)
     move_number = models.IntegerField()  # The move number (e.g., 1, 2, 3...)
     player = models.ForeignKey(User, related_name='game_moves', on_delete=models.CASCADE)  # The player who made the move
-    move = models.CharField(max_length=1)  # The position on the board (e.g., '0', '1', '2'...)
+    move = models.CharField(max_length=2)  # The position on the board (e.g., '0', '1', '2'...)
 
     def __str__(self):
         return f"Move {self.move_number} by {self.player.username} in Game {self.game.id}"
+
+# game/admin.py
+from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
+from .models import User, Game, GameHistory
+
+# Register your custom User model
+class CustomUserAdmin(UserAdmin):
+    model = User
+    list_display = ['username', 'email', 'first_name', 'last_name', 'is_active', 'is_staff']  # Display these fields in the admin panel
+    list_filter = ['is_staff', 'is_active']
+    search_fields = ['username', 'email']
+    ordering = ['username']
+
+admin.site.register(User, CustomUserAdmin)  # Register custom user admin
+
+# Register the Game model
+class GameAdmin(admin.ModelAdmin):
+    list_display = ['player1', 'player2', 'current_turn', 'game_board', 'winner', 'draw']
+    search_fields = ['player1__username', 'player2__username']
+    list_filter = ['winner', 'draw']
+
+admin.site.register(Game, GameAdmin)
+
+# Register the GameHistory model
+class GameHistoryAdmin(admin.ModelAdmin):
+    list_display = ['game', 'move_number', 'player', 'move']
+    search_fields = ['game__id', 'player__username']
+    list_filter = ['game']
+
+admin.site.register(GameHistory, GameHistoryAdmin)
