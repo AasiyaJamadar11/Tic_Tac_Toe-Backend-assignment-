@@ -19,11 +19,13 @@ SQLite (default database for Django)
 1. Clone this repository or unzip the project folder:
 
 git clone https://github.com/AasiyaJamadar11/Tic_Tac_Toe-Backend-assignment-.git
+
 cd tic_tac_toe
 
 2. Create a virtual environment and activate it:
 
 python -m venv env
+
 source env/bin/activate  # For Windows: env\Scripts\activate
 
 3. Install the dependencies:
@@ -35,11 +37,13 @@ pip install -r requirements.txt
 python manage.py migrate
 
 5. Run the development server:
+
 python manage.py runserver
 
 6. Use an API testing tool (such as Postman or curl) to interact with the backend APIs.
 
 # App Architecture
+
 The application is built using Django's MVT (Model-View-Template) pattern, although no frontend templates are included in this implementation.
 
 Models: Defines the game state and stores player moves.
@@ -47,9 +51,11 @@ Views: Exposes APIs to handle game actions such as making moves and checking the
 URLs: Maps endpoints for the game APIs.
 
 # Database Schema
+
 The database is managed by Django’s ORM. You can find migrations in the migrations folder of the app.
 
 # External Libraries or APIs Used
+
 Django Framework: Used for backend logic, API creation, and database management.
 
 # Assumptions and Incomplete Features
