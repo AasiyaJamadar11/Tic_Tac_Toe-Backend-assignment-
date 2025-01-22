@@ -47,7 +47,9 @@ python manage.py runserver
 The application is built using Django's MVT (Model-View-Template) pattern, although no frontend templates are included in this implementation.
 
 Models: Defines the game state and stores player moves.
+
 Views: Exposes APIs to handle game actions such as making moves and checking the game status.
+
 URLs: Maps endpoints for the game APIs.
 
 # Database Schema
