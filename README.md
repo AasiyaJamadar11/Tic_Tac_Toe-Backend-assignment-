@@ -32,3 +32,26 @@ python manage.py migrate
 
 5. Run the development server:
 python manage.py runserver
+
+6. Use an API testing tool (such as Postman or curl) to interact with the backend APIs.
+
+# App Architecture
+The application is built using Django's MVT (Model-View-Template) pattern, although no frontend templates are included in this implementation.
+
+Models: Defines the game state and stores player moves.
+Views: Exposes APIs to handle game actions such as making moves and checking the game status.
+URLs: Maps endpoints for the game APIs.
+
+# Database Schema
+The database is managed by Django’s ORM. You can find migrations in the migrations folder of the app.
+
+# External Libraries or APIs Used
+Django Framework: Used for backend logic, API creation, and database management.
+
+# Assumptions and Incomplete Features
+1. Assumptions:
+The game logic assumes two players taking turns via API requests.
+The backend does not include any frontend templates or user interface.
+
+2. Incomplete Features:
+Frontend integration for user interaction.
