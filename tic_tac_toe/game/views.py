@@ -12,12 +12,8 @@ from django.contrib.auth import get_user_model
 from .models import Game  # Add this import
 from rest_framework.permissions import IsAuthenticated
 from .serializers import GameHistorySerializer
-
-
-User = get_user_model()
-
-# game/views.py
-
+from django.shortcuts import redirect
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -28,16 +24,6 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
-# Render login page
-def login_page(request):
-    return render(request, 'login.html')
-
-# Render register page
-def register_page(request):
-    return render(request, 'register.html')
-
-def index(request):
-    return render(request, 'index.html')
 
 class RegisterView(APIView):
     def post(self, request):
@@ -46,6 +32,7 @@ class RegisterView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class LoginView(APIView):
     def post(self, request):
@@ -60,7 +47,6 @@ class LoginView(APIView):
             token_serializer = TokenSerializer(token_data)
             return Response(token_serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 
 # Game-related views
