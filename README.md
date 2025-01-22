@@ -17,17 +17,21 @@ SQLite (default database for Django)
 
 # Setup Instructions
 1. Clone this repository or unzip the project folder:
+
 git clone https://github.com/AasiyaJamadar11/Tic_Tac_Toe-Backend-assignment-.git
 cd tic_tac_toe
 
 2. Create a virtual environment and activate it:
+
 python -m venv env
 source env/bin/activate  # For Windows: env\Scripts\activate
 
 3. Install the dependencies:
+
 pip install -r requirements.txt
 
 4. Apply the database migrations:
+
 python manage.py migrate
 
 5. Run the development server:
